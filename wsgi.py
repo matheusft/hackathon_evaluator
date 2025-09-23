@@ -10,25 +10,20 @@ import sys
 from pathlib import Path
 
 # Add src to Python path
-src_path = Path(__file__).parent / "src"
-sys.path.insert(0, str(src_path))
+sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-# Change to src directory for relative imports
-os.chdir(src_path)
-
-from app import create_app
+# Import from src package
+from src.app import create_app
 
 # Configuration for production
-config = {
+config_override = {
     "SECRET_KEY": os.environ.get("SECRET_KEY", "fallback-secret-key"),
-    "LEADERBOARD_CSV_PATH": os.environ.get(
-        "LEADERBOARD_CSV_PATH", "../data/leaderboard.csv"
-    ),
+    "LEADERBOARD_CSV_PATH": os.environ.get("LEADERBOARD_CSV_PATH", "data/leaderboard.csv"),
     "DEBUG": False,
 }
 
 # Create application instance
-app = create_app(config=config)
+app = create_app(config_override=config_override)
 
 if __name__ == "__main__":
     # For development only
