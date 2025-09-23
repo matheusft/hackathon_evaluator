@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DS Hackathon Leaderboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ffffff 0%, #8c8c8d 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        
+        .leaderboard {
+            padding: 20px;
+        }
+        
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        .leaderboard-table th,
+        .leaderboard-table td {
+            padding: 15px 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .leaderboard-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+            position: sticky;
+            top: 0;
+        }
+        
+        .leaderboard-table tr:hover {
+            background-color: #f8f9fa;
+            transition: background-color 0.2s ease;
+        }
+        
+        .rank {
+            font-weight: bold;
+            width: 60px;
+            text-align: center;
+        }
+        
+        .rank-1 { color: #ffd700; }
+        .rank-2 { color: #c0c0c0; }
+        .rank-3 { color: #cd7f32; }
+        
+        .participant-name {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .submission-tag {
+            background: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            color: #495057;
+        }
+        
+        .score {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #4CAF50;
+        }
+        
+        .timestamp {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+        
+        
+        
+        @media (max-width: 768px) {
+            .stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .leaderboard-table {
+                font-size: 14px;
+            }
+            
+            .leaderboard-table th,
+            .leaderboard-table td {
+                padding: 10px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏆 Hackathon Leaderboard</h1>
+            <p>Real-time participant rankings and scores</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-number">{{ leaderboard|length }}</div>
+                <div class="stat-label">Total Participants</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">
+                    {% if leaderboard %}
+                        {{ "%.3f"|format(leaderboard[0].score) }}
+                    {% else %}
+                        0.000
+                    {% endif %}
+                </div>
+                <div class="stat-label">Highest Score</div>
+            </div>
+        </div>
+        
+        
+        <div class="leaderboard">
+            {% if leaderboard %}
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th class="rank">Rank</th>
+                            <th>Participant</th>
+                            <th>Submission</th>
+                            <th>Score</th>
+                            <th>Submitted</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in leaderboard[:10] %}
+                        <tr>
+                            <td class="rank rank-{{ entry.rank if entry.rank <= 3 else 'other' }}">
+                                {% if entry.rank == 1 %}🥇
+                                {% elif entry.rank == 2 %}🥈
+                                {% elif entry.rank == 3 %}🥉
+                                {% else %}{{ entry.rank }}
+                                {% endif %}
+                            </td>
+                            <td class="participant-name">{{ entry.participant_name }}</td>
+                            <td>
+                                <span class="submission-tag">{{ entry.submission_tag }}</span>
+                            </td>
+                            <td class="score">{{ entry.formatted_score }}</td>
+                            <td class="timestamp">
+                                {% set timestamp = entry.timestamp %}
+                                {% if 'T' in timestamp %}
+                                    {{ timestamp.split('T')[0] }} {{ timestamp.split('T')[1].split('.')[0] }}
+                                {% else %}
+                                    {{ timestamp }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="no-data">
+                    <h3>🎯 No submissions yet!</h3>
+                    <p>Be the first to submit your solution and claim the top spot!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    
+    <script>
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            window.location.reload();
+        }, 30000);
+    </script>
+</body>
+</html>

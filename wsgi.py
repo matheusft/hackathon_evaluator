@@ -3,10 +3,6 @@ WSGI Entry Point for Production Deployment
 """
 
 import os
-import sys
-
-# Add current directory to Python path to ensure modules are found
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Simple direct import
 from app import create_app
