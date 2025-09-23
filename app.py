@@ -26,16 +26,27 @@ working_dir = os.getcwd()
 if working_dir not in sys.path:
     sys.path.insert(0, working_dir)
 
+# Try importing modules with detailed error handling
 try:
-    from leaderboard_manager import LeaderboardManager
-    from evaluator import EvaluationEngine
     from test_data_provider import TestDataProvider
-    from config_manager import load_config, AppConfig
+    print("✓ Successfully imported test_data_provider")
 except ImportError as e:
-    print(f"Import error: {e}")
+    print(f"✗ Failed to import test_data_provider: {e}")
     print(f"Current working directory: {os.getcwd()}")
     print(f"Python path: {sys.path}")
-    print(f"Files in current directory: {os.listdir('.')}")
+    print(f"Files in current directory: {[f for f in os.listdir('.') if f.endswith('.py')]}")
+    # Create a dummy class to continue
+    class TestDataProvider:
+        def generate_test_data(self, participant_name, submission_tag):
+            return {"error": "test_data_provider not available"}
+
+try:
+    from leaderboard_manager import LeaderboardManager
+    from evaluator import EvaluationEngine  
+    from config_manager import load_config, AppConfig
+    print("✓ Successfully imported other modules")
+except ImportError as e:
+    print(f"✗ Failed to import other modules: {e}")
     raise
 
 
@@ -218,7 +229,9 @@ def create_app(config_override: Optional[Dict[str, Any]] = None) -> Flask:
     return app
 
 
+# Create the Flask app instance for production deployment
+app = create_app()
+
 if __name__ == "__main__":
-    app = create_app()
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=app.config["DEBUG"])
