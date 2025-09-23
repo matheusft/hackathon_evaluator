@@ -22,7 +22,7 @@ def main():
     """Run the application locally."""
     # Load configuration
     app_config = load_config()
-    
+
     # Override for local development if needed
     config_override = {
         "LEADERBOARD_CSV_PATH": str(Path(__file__).parent / "data" / "leaderboard.csv"),
@@ -44,10 +44,10 @@ def main():
 
     try:
         app.run(
-            host=app_config.server.host, 
-            port=port, 
-            debug=app_config.server.debug, 
-            use_reloader=True
+            host=app_config.server.host,
+            port=port,
+            debug=app_config.server.debug,
+            use_reloader=True,
         )
     except KeyboardInterrupt:
         print("\n👋 Server stopped. Goodbye!")
