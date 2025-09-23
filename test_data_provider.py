@@ -2,51 +2,64 @@
 Test Data Provider Module
 =========================
 
-Provides test data to participants for evaluation.
+Provides vehicle configuration test data to participants for evaluation.
 """
 
 import json
 import random
 import hashlib
+import pandas as pd
 from typing import Dict, Any, List
 from datetime import datetime
+from pathlib import Path
 
 
 class TestDataProvider:
-    """Provides test data for participants to process."""
+    """Provides vehicle configuration test data for participants to process."""
 
     def __init__(self):
         """Initialize test data provider."""
-        self.data_templates = self._initialize_data_templates()
+        self.vehicle_data = self._load_vehicle_data()
+        self.test_case_generators = self._initialize_test_generators()
 
-    def _initialize_data_templates(self) -> Dict[str, Any]:
-        """Initialize different types of test data templates."""
-        return {
-            "simple_math": {
-                "description": "Basic mathematical operations",
-                "sample_data": [
-                    {"operation": "add", "numbers": [5, 3]},
-                    {"operation": "multiply", "numbers": [4, 7]},
-                    {"operation": "subtract", "numbers": [10, 4]},
-                ],
+    def _load_vehicle_data(self) -> pd.DataFrame:
+        """Load vehicle configuration data."""
+        data_path = Path(__file__).parent / "data" / "jlr_vehicle_configurations.csv"
+        
+        if data_path.exists():
+            return pd.read_csv(data_path)
+        else:
+            return pd.DataFrame()
+
+    def _initialize_test_generators(self) -> List[Dict[str, Any]]:
+        """Initialize test case generator configurations."""
+        return [
+            {
+                "name": "identical_configs",
+                "description": "Two identical vehicle configurations",
+                "generator": self._generate_identical_test,
             },
-            "text_processing": {
-                "description": "Text analysis and processing",
-                "sample_data": [
-                    {"text": "Hello world", "task": "count_words"},
-                    {"text": "Python programming", "task": "reverse"},
-                    {"text": "Machine Learning", "task": "uppercase"},
-                ],
+            {
+                "name": "single_feature_diff",
+                "description": "Configurations differing by one feature",
+                "generator": self._generate_feature_diff_test,
             },
-            "data_analysis": {
-                "description": "Data analysis and statistics",
-                "sample_data": [
-                    {"dataset": [1, 2, 3, 4, 5], "task": "calculate_mean"},
-                    {"dataset": [10, 20, 15, 25, 30], "task": "find_max"},
-                    {"dataset": [2, 4, 6, 8, 10], "task": "sum_all"},
-                ],
+            {
+                "name": "high_vs_low_spec",
+                "description": "High vs low specification comparison",
+                "generator": self._generate_spec_comparison_test,
             },
-        }
+            {
+                "name": "price_similarity",
+                "description": "Similar price vs distant price comparison",
+                "generator": self._generate_price_test,
+            },
+            {
+                "name": "same_vehicle_diff_trim",
+                "description": "Same vehicle line with different trim levels",
+                "generator": self._generate_trim_test,
+            },
+        ]
 
     def generate_test_data(
         self, participant_name: str, submission_tag: str
@@ -61,16 +74,13 @@ class TestDataProvider:
         Returns:
             Test data package for the participant
         """
-        # Create deterministic but unique test data based on participant
         seed_string = f"{participant_name}_{submission_tag}"
         random.seed(hashlib.md5(seed_string.encode()).hexdigest())
 
-        # Generate test data ID
         test_data_id = hashlib.sha256(
             f"{participant_name}_{submission_tag}_{datetime.utcnow().isoformat()}".encode()
         ).hexdigest()[:16]
 
-        # Select and customize test cases
         test_cases = self._generate_test_cases(participant_name=participant_name)
 
         return {
@@ -79,125 +89,173 @@ class TestDataProvider:
             "submission_tag": submission_tag,
             "timestamp": datetime.utcnow().isoformat(),
             "instructions": {
-                "description": "Process the provided test cases and return results",
+                "description": "Generate embeddings for vehicle configurations",
                 "expected_format": {
-                    "processed_data": "Dictionary with results for each test case",
+                    "processed_data": {
+                        "test_id": {
+                            "embeddings": "List of embedding vectors",
+                            "num_configs": "Number of configurations processed",
+                        }
+                    },
                     "metadata": {
                         "processing_time_seconds": "Time taken to process",
-                        "memory_usage_mb": "Memory usage (optional)",
-                        "quality_checks_passed": "Boolean indicating quality",
-                        "validation_status": "Status of validation (passed/failed)",
+                        "memory_usage_mb": "Memory usage",
+                        "quality_checks_passed": "Boolean",
+                        "validation_status": "passed/failed",
+                        "total_embeddings_generated": "Total count",
                     },
                 },
                 "submission_endpoint": "/api/submit-results",
             },
             "test_cases": test_cases,
             "evaluation_criteria": {
-                "accuracy": "Correctness of results (40%)",
+                "accuracy": "Embedding quality (40%)",
                 "performance": "Processing efficiency (30%)",
                 "completeness": "Coverage and metadata (30%)",
             },
         }
 
     def _generate_test_cases(self, participant_name: str) -> List[Dict[str, Any]]:
-        """
-        Generate specific test cases for a participant.
+        """Generate specific test cases for a participant."""
+        if self.vehicle_data.empty:
+            return []
 
-        Args:
-            participant_name: Name of the participant
+        participant_hash = hashlib.md5(participant_name.encode()).hexdigest()
+        seed_value = int(participant_hash[:8], 16)
+        random.seed(seed_value)
 
-        Returns:
-            List of test cases
-        """
         test_cases = []
 
-        # Add different types of test cases
-        for template_name, template_data in self.data_templates.items():
-            # Customize based on participant (for deterministic variation)
-            participant_hash = hashlib.md5(participant_name.encode()).hexdigest()
-            seed_value = int(participant_hash[:8], 16) % 1000
-
-            for i, sample in enumerate(template_data["sample_data"]):
-                test_case = {
-                    "test_id": f"{template_name}_{i+1}",
-                    "type": template_name,
-                    "description": template_data["description"],
-                    "input_data": self._customize_test_case(
-                        sample=sample, seed=seed_value + i
-                    ),
-                    "expected_output_format": self._get_expected_format(
-                        test_type=template_name
-                    ),
-                }
-                test_cases.append(test_case)
+        for generator_config in self.test_case_generators:
+            for i in range(2):
+                test_case = generator_config["generator"](seed=seed_value + i)
+                if test_case:
+                    test_case["test_id"] = f"{generator_config['name']}_{i+1}"
+                    test_case["type"] = generator_config["name"]
+                    test_case["description"] = generator_config["description"]
+                    test_cases.append(test_case)
 
         return test_cases
 
-    def _customize_test_case(self, sample: Dict[str, Any], seed: int) -> Dict[str, Any]:
-        """
-        Customize a test case with deterministic randomization.
-
-        Args:
-            sample: Base sample data
-            seed: Seed for randomization
-
-        Returns:
-            Customized test case
-        """
+    def _generate_identical_test(self, seed: int) -> Dict[str, Any]:
+        """Generate test with identical configurations."""
         random.seed(seed)
-        customized = sample.copy()
+        vehicle_config = self.vehicle_data.sample(n=1).iloc[0].to_dict()
 
-        # Customize based on test type
-        if "numbers" in customized:
-            # Randomize numbers slightly
-            customized["numbers"] = [
-                num + random.randint(-2, 2) for num in customized["numbers"]
-            ]
-        elif "dataset" in customized:
-            # Add some variation to dataset
-            base_dataset = customized["dataset"]
-            customized["dataset"] = [
-                val + random.randint(-5, 5) for val in base_dataset
-            ]
-        elif "text" in customized:
-            # Add variations to text processing tasks
-            texts = [
-                "Hello world",
-                "Python programming",
-                "Machine Learning",
-                "Data Science",
-                "Artificial Intelligence",
-                "Deep Learning",
-            ]
-            customized["text"] = random.choice(texts)
-
-        return customized
-
-    def _get_expected_format(self, test_type: str) -> Dict[str, Any]:
-        """
-        Get expected output format for a test type.
-
-        Args:
-            test_type: Type of test case
-
-        Returns:
-            Expected output format description
-        """
-        formats = {
-            "simple_math": {
-                "result": "Numeric result of the operation",
-                "operation_performed": "Description of operation",
-            },
-            "text_processing": {
-                "result": "Processed text result",
-                "original_text": "Original input text",
-                "task_completed": "Boolean indicating completion",
-            },
-            "data_analysis": {
-                "result": "Calculated statistical result",
-                "dataset_size": "Number of data points processed",
-                "calculation_method": "Method used for calculation",
-            },
+        return {
+            "input_data": {
+                "vehicle_configs": [vehicle_config, vehicle_config.copy()],
+                "expected_relationship": "identical",
+            }
         }
 
-        return formats.get(test_type, {"result": "Processed result"})
+    def _generate_feature_diff_test(self, seed: int) -> Dict[str, Any]:
+        """Generate test with single feature difference."""
+        random.seed(seed)
+        vehicle_config = self.vehicle_data.sample(n=1).iloc[0].to_dict()
+        
+        modified_config = vehicle_config.copy()
+        features = self._parse_features(vehicle_config.get("Feature_Codes", "[]"))
+        
+        if features and len(features) > 1:
+            modified_config["Feature_Codes"] = str(features[:-1])
+
+        return {
+            "input_data": {
+                "vehicle_configs": [vehicle_config, modified_config],
+                "expected_relationship": "similar",
+            }
+        }
+
+    def _generate_spec_comparison_test(self, seed: int) -> Dict[str, Any]:
+        """Generate high vs low spec test."""
+        random.seed(seed)
+        
+        high_trims = ["SV", "SVR", "Autobiography"]
+        low_trims = ["S", "SE"]
+        
+        high_spec = self.vehicle_data[
+            self.vehicle_data["Trim"].isin(high_trims)
+        ].sample(n=1)
+        low_spec = self.vehicle_data[
+            self.vehicle_data["Trim"].isin(low_trims)
+        ].sample(n=1)
+
+        if high_spec.empty:
+            high_spec = self.vehicle_data.nlargest(1, "Total_Price_GBP")
+        if low_spec.empty:
+            low_spec = self.vehicle_data.nsmallest(1, "Total_Price_GBP")
+
+        return {
+            "input_data": {
+                "vehicle_configs": [
+                    high_spec.iloc[0].to_dict(),
+                    low_spec.iloc[0].to_dict(),
+                ],
+                "expected_relationship": "different",
+            }
+        }
+
+    def _generate_price_test(self, seed: int) -> Dict[str, Any]:
+        """Generate price similarity test."""
+        random.seed(seed)
+        base_config = self.vehicle_data.sample(n=1).iloc[0].to_dict()
+        base_price = base_config["Total_Price_GBP"]
+
+        price_range = base_price * 0.2
+        similar_configs = self.vehicle_data[
+            (self.vehicle_data["Total_Price_GBP"] >= base_price - price_range)
+            & (self.vehicle_data["Total_Price_GBP"] <= base_price + price_range)
+        ]
+        
+        distant_configs = self.vehicle_data[
+            (self.vehicle_data["Total_Price_GBP"] < base_price * 0.5)
+            | (self.vehicle_data["Total_Price_GBP"] > base_price * 2.0)
+        ]
+
+        similar_config = (
+            similar_configs.sample(n=1).iloc[0].to_dict()
+            if not similar_configs.empty
+            else base_config
+        )
+        distant_config = (
+            distant_configs.sample(n=1).iloc[0].to_dict()
+            if not distant_configs.empty
+            else base_config
+        )
+
+        return {
+            "input_data": {
+                "vehicle_configs": [base_config, similar_config, distant_config],
+                "expected_relationship": "price_correlation",
+            }
+        }
+
+    def _generate_trim_test(self, seed: int) -> Dict[str, Any]:
+        """Generate same vehicle line, different trim test."""
+        random.seed(seed)
+        vehicle_line = self.vehicle_data["Vehicle_Line"].sample(n=1).iloc[0]
+        line_configs = self.vehicle_data[
+            self.vehicle_data["Vehicle_Line"] == vehicle_line
+        ]
+
+        if len(line_configs) >= 3:
+            selected = line_configs.sample(n=3).to_dict(orient="records")
+        else:
+            selected = self.vehicle_data.sample(n=3).to_dict(orient="records")
+
+        return {
+            "input_data": {
+                "vehicle_configs": selected,
+                "expected_relationship": "same_line_different_trim",
+            }
+        }
+
+    def _parse_features(self, feature_str: str) -> List[str]:
+        """Parse feature string into list."""
+        if pd.isna(feature_str) or feature_str == "[]":
+            return []
+        try:
+            return [f.strip().strip("'\"") for f in feature_str.strip("[]").split(",")]
+        except:
+            return []

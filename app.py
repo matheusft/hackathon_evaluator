@@ -29,21 +29,27 @@ if working_dir not in sys.path:
 # Try importing modules with detailed error handling
 try:
     from test_data_provider import TestDataProvider
+
     print("✓ Successfully imported test_data_provider")
 except ImportError as e:
     print(f"✗ Failed to import test_data_provider: {e}")
     print(f"Current working directory: {os.getcwd()}")
     print(f"Python path: {sys.path}")
-    print(f"Files in current directory: {[f for f in os.listdir('.') if f.endswith('.py')]}")
+    print(
+        f"Files in current directory: {[f for f in os.listdir('.') if f.endswith('.py')]}"
+    )
+
     # Create a dummy class to continue
     class TestDataProvider:
         def generate_test_data(self, participant_name, submission_tag):
             return {"error": "test_data_provider not available"}
 
+
 try:
     from leaderboard_manager import LeaderboardManager
-    from evaluator import EvaluationEngine  
+    from evaluator import EvaluationEngine
     from config_manager import load_config, AppConfig
+
     print("✓ Successfully imported other modules")
 except ImportError as e:
     print(f"✗ Failed to import other modules: {e}")
@@ -64,14 +70,16 @@ def create_app(config_override: Optional[Dict[str, Any]] = None) -> Flask:
 
     # Load configuration from YAML
     app_config = load_config()
-    
+
     # Set Flask config from our config system
-    app.config.update({
-        "SECRET_KEY": app_config.server.secret_key,
-        "DEBUG": app_config.server.debug,
-        "LEADERBOARD_CSV_PATH": app_config.leaderboard.csv_path,
-    })
-    
+    app.config.update(
+        {
+            "SECRET_KEY": app_config.server.secret_key,
+            "DEBUG": app_config.server.debug,
+            "LEADERBOARD_CSV_PATH": app_config.leaderboard.csv_path,
+        }
+    )
+
     # Apply any runtime overrides
     if config_override:
         app.config.update(config_override)
