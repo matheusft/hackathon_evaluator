@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: hackathon-evaluator
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT wsgi:app
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: LEADERBOARD_CSV_PATH
+        value: ./data/leaderboard.csv

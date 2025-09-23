@@ -1,0 +1,70 @@
+# Hackathon Evaluator Configuration
+---
+# Server settings
+server:
+  host: "0.0.0.0"
+  port: 5001
+  debug: true
+  secret_key: "dev-secret-key-change-in-production"
+
+# Evaluation settings
+evaluation:
+  criteria_weights:
+    accuracy: 0.4
+    performance: 0.3
+    completeness: 0.3
+  
+  # Mock scoring parameters (customize for your hackathon)
+  scoring:
+    base_score_range:
+      min: 0.6
+      max: 0.95
+    completeness_bonus_max: 0.1
+    performance_time_threshold: 10.0  # seconds
+    performance_memory_threshold: 1000.0  # MB
+
+# Leaderboard settings
+leaderboard:
+  csv_path: "data/leaderboard.csv"
+  max_displayed_participants: 100
+  auto_refresh_seconds: 30
+
+# Test data generation settings
+test_data:
+  templates:
+    simple_math:
+      description: "Basic mathematical operations"
+      weight: 0.3
+    text_processing:
+      description: "Text analysis and processing"
+      weight: 0.3
+    data_analysis:
+      description: "Data analysis and statistics"
+      weight: 0.4
+  
+  customization:
+    variation_range: 5  # ± range for numerical variations
+    text_pool_size: 6   # Number of text variations available
+
+# API settings
+api:
+  timeout_seconds: 30
+  max_payload_size_mb: 10
+  rate_limit_per_minute: 100
+
+# Deployment settings
+deployment:
+  environment: "development"  # development, staging, production
+  log_level: "INFO"
+  enable_cors: true
+  
+# Production overrides (for Render deployment)
+production:
+  server:
+    debug: false
+    secret_key: null  # Will use environment variable
+  leaderboard:
+    csv_path: "./data/leaderboard.csv"
+  deployment:
+    environment: "production"
+    log_level: "WARNING"
