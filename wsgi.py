@@ -10,7 +10,7 @@ from app import create_app
 # Production configuration
 config_override = {
     "SECRET_KEY": os.environ.get("SECRET_KEY", "fallback-secret-key"),
-    "LEADERBOARD_CSV_PATH": os.environ.get("LEADERBOARD_CSV_PATH", "../data/leaderboard.csv"),
+    "LEADERBOARD_CSV_PATH": os.environ.get("LEADERBOARD_CSV_PATH", "data/leaderboard.csv"),
     "DEBUG": False,
 }
 
