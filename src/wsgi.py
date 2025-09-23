@@ -6,19 +6,14 @@ Entry point for production deployment (Render, Heroku, etc.)
 """
 
 import os
-import sys
-from pathlib import Path
 
-# Add src to Python path
-sys.path.insert(0, str(Path(__file__).parent / "src"))
-
-# Import from src package
-from src.app import create_app
+# Import directly since we're in the same directory
+from app import create_app
 
 # Configuration for production
 config_override = {
     "SECRET_KEY": os.environ.get("SECRET_KEY", "fallback-secret-key"),
-    "LEADERBOARD_CSV_PATH": os.environ.get("LEADERBOARD_CSV_PATH", "data/leaderboard.csv"),
+    "LEADERBOARD_CSV_PATH": os.environ.get("LEADERBOARD_CSV_PATH", "../data/leaderboard.csv"),
     "DEBUG": False,
 }
 

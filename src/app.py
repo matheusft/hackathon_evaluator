@@ -15,10 +15,10 @@ from typing import Dict, Any, Optional
 import os
 from datetime import datetime
 
-from .leaderboard_manager import LeaderboardManager
-from .evaluator import EvaluationEngine
-from .test_data_provider import TestDataProvider
-from .config_manager import load_config, AppConfig
+from leaderboard_manager import LeaderboardManager
+from evaluator import EvaluationEngine
+from test_data_provider import TestDataProvider
+from config_manager import load_config, AppConfig
 
 
 def create_app(config_override: Optional[Dict[str, Any]] = None) -> Flask:
