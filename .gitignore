@@ -62,7 +62,7 @@ logs/
 .claude/
 
 # Test files (optional - remove if you want to keep test_workflow.py)
-test_*.py
+# test_*.py  # Commented out to allow test_data_provider.py and test_workflow.py
 
 # Temporary files
 *.tmp
