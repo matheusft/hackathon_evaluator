@@ -13,13 +13,16 @@ from pathlib import Path
 src_path = Path(__file__).parent / "src"
 sys.path.insert(0, str(src_path))
 
+# Change to src directory for relative imports
+os.chdir(src_path)
+
 from app import create_app
 
 # Configuration for production
 config = {
     "SECRET_KEY": os.environ.get("SECRET_KEY", "fallback-secret-key"),
     "LEADERBOARD_CSV_PATH": os.environ.get(
-        "LEADERBOARD_CSV_PATH", str(Path(__file__).parent / "data" / "leaderboard.csv")
+        "LEADERBOARD_CSV_PATH", "../data/leaderboard.csv"
     ),
     "DEBUG": False,
 }
