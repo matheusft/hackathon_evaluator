@@ -2,10 +2,9 @@ services:
   - type: web
     name: hackathon-evaluator
     runtime: python
-    plan: free
-    rootDir: .
     buildCommand: pip install -r requirements.txt
     startCommand: cd src && gunicorn --bind 0.0.0.0:$PORT wsgi:app
+    plan: free
     envVars:
       - key: ENVIRONMENT
         value: production
