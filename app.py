@@ -13,12 +13,30 @@ Central evaluator service that:
 from flask import Flask, request, jsonify, render_template
 from typing import Dict, Any, Optional
 import os
+import sys
 from datetime import datetime
 
-from leaderboard_manager import LeaderboardManager
-from evaluator import EvaluationEngine
-from test_data_provider import TestDataProvider
-from config_manager import load_config, AppConfig
+# Ensure current directory is in Python path for imports
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+
+# Also add the working directory
+working_dir = os.getcwd()
+if working_dir not in sys.path:
+    sys.path.insert(0, working_dir)
+
+try:
+    from leaderboard_manager import LeaderboardManager
+    from evaluator import EvaluationEngine
+    from test_data_provider import TestDataProvider
+    from config_manager import load_config, AppConfig
+except ImportError as e:
+    print(f"Import error: {e}")
+    print(f"Current working directory: {os.getcwd()}")
+    print(f"Python path: {sys.path}")
+    print(f"Files in current directory: {os.listdir('.')}")
+    raise
 
 
 def create_app(config_override: Optional[Dict[str, Any]] = None) -> Flask:
