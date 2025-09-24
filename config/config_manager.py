@@ -58,6 +58,30 @@ class TestDataConfig:
     """Test data generation configuration settings."""
 
     seed: int = 42
+    dataset_path: str = "data/jlr_vehicle_configurations.csv"
+    thresholds: Dict[str, float] = None
+    test_weights: Dict[str, float] = None
+
+    def __post_init__(self):
+        if self.thresholds is None:
+            self.thresholds = {
+                "high_similarity": 0.85,
+                "low_similarity": 0.30,
+                "single_option_diff_min": 0.75,
+            }
+        if self.test_weights is None:
+            self.test_weights = {
+                "price_extremes": 0.15,
+                "single_option_difference": 0.15,
+                "model_year_sensitivity": 0.10,
+                "color_sensitivity": 0.10,
+                "trim_level_similarity": 0.10,
+                "vehicle_line_separation": 0.10,
+                "derivative_clustering": 0.10,
+                "feature_count_correlation": 0.10,
+                "transitivity": 0.05,
+                "cross_year_comparison": 0.05,
+            }
 
 
 @dataclass
