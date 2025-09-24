@@ -7,24 +7,37 @@ A Flask-based evaluator service for hackathon competitions with test data distri
 ## Features
 
 - **Test Data Distribution**: Generates deterministic test data from JLR vehicle configurations
-- **Automated Evaluation**: Scores submissions on accuracy, performance, and completeness
-- **Live Leaderboard**: Real-time web interface with auto-refresh
-- **REST API**: Complete API for participant interactions
+- **Automated Evaluation**: Scores submissions using 10 specialized embedding quality tests
+- **Live Leaderboard**: Real-time PostgreSQL-based leaderboard with web interface
+- **REST API**: Complete API for participant interactions and submission evaluation
 
 ## Project Structure
 
 ```
 hackathon_evaluator/
 ├── app.py                     # Main Flask application
-├── evaluator.py               # Evaluation engine
-├── leaderboard_manager.py     # Leaderboard management
-├── test_data_provider.py      # Test data generation
-├── test_workflow.py           # Testing script
+├── wsgi.py                    # WSGI entry point for production
+├── requirements.txt           # Python dependencies
+├── render.yaml               # Render deployment configuration
+├── src/
+│   ├── core/
+│   │   ├── evaluator.py       # Evaluation engine
+│   │   ├── leaderboard_manager.py # Leaderboard management
+│   │   └── test_data_provider.py # Test data generation
+│   └── utils/
+│       └── run_local.py       # Local development server
+├── scripts/
+│   └── test_workflow.py       # Testing and demo script
+├── docs/
+│   ├── DEPLOYMENT_CHECKLIST.md # Deployment guide
+│   ├── EVALUATION_METHODOLOGY.md # Evaluation documentation
+│   └── postgres_cheatsheet.md  # Database reference
+├── config/
+│   ├── config_manager.py      # Configuration loader
+│   └── config.yaml            # YAML configuration
 ├── data/
-│   ├── leaderboard.csv        # Leaderboard storage
-│   └── jlr_vehicle_configurations.csv  # Vehicle data
-├── config/                    # YAML configuration
-└── templates/                 # HTML frontend
+│   └── jlr_vehicle_configurations.csv # Vehicle data
+└── templates/                 # HTML frontend templates
 ```
 
 ## Quick Start
@@ -36,7 +49,7 @@ hackathon_evaluator/
 
 2. **Run locally:**
    ```bash
-   python run_local.py
+   python src/utils/run_local.py
    ```
 
 3. **Access service:**
@@ -64,7 +77,7 @@ Health check endpoint.
 
 Run the automated test workflow:
 ```bash
-python test_workflow.py
+python scripts/test_workflow.py
 ```
 
 This simulates multiple participants and displays leaderboard updates.
@@ -75,9 +88,8 @@ This simulates multiple participants and displays leaderboard updates.
 
 **Environment variables**:
 - `ENVIRONMENT=production`
-- `SECRET_KEY=your_secret_key`
-- `PORT=10000`
-- `LEADERBOARD_CSV_PATH=data/leaderboard.csv`
+- `SECRET_KEY=auto-generated`
+- `DATABASE_URL=auto-configured-from-postgresql-database`
 
 ## Evaluation System
 
