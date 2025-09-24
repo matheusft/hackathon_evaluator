@@ -11,4 +11,8 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: LEADERBOARD_CSV_PATH
-        value: data/leaderboard.csv
+        value: /var/data/leaderboard.csv
+    disk:
+      name: leaderboard-data
+      mountPath: /var/data
+      sizeGB: 1
