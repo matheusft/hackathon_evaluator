@@ -5,7 +5,6 @@ Test Data Provider Module
 Provides vehicle configuration test data to participants for evaluation.
 """
 
-import json
 import random
 import hashlib
 import pandas as pd
@@ -25,7 +24,7 @@ class TestDataProvider:
     def _load_vehicle_data(self) -> pd.DataFrame:
         """Load vehicle configuration data."""
         data_path = Path(__file__).parent / "data" / "jlr_vehicle_configurations.csv"
-        
+
         if data_path.exists():
             return pd.read_csv(data_path)
         else:
@@ -153,10 +152,10 @@ class TestDataProvider:
         """Generate test with single feature difference."""
         random.seed(seed)
         vehicle_config = self.vehicle_data.sample(n=1).iloc[0].to_dict()
-        
+
         modified_config = vehicle_config.copy()
         features = self._parse_features(vehicle_config.get("Feature_Codes", "[]"))
-        
+
         if features and len(features) > 1:
             modified_config["Feature_Codes"] = str(features[:-1])
 
@@ -170,16 +169,16 @@ class TestDataProvider:
     def _generate_spec_comparison_test(self, seed: int) -> Dict[str, Any]:
         """Generate high vs low spec test."""
         random.seed(seed)
-        
+
         high_trims = ["SV", "SVR", "Autobiography"]
         low_trims = ["S", "SE"]
-        
+
         high_spec = self.vehicle_data[
             self.vehicle_data["Trim"].isin(high_trims)
         ].sample(n=1)
-        low_spec = self.vehicle_data[
-            self.vehicle_data["Trim"].isin(low_trims)
-        ].sample(n=1)
+        low_spec = self.vehicle_data[self.vehicle_data["Trim"].isin(low_trims)].sample(
+            n=1
+        )
 
         if high_spec.empty:
             high_spec = self.vehicle_data.nlargest(1, "Total_Price_GBP")
@@ -207,7 +206,7 @@ class TestDataProvider:
             (self.vehicle_data["Total_Price_GBP"] >= base_price - price_range)
             & (self.vehicle_data["Total_Price_GBP"] <= base_price + price_range)
         ]
-        
+
         distant_configs = self.vehicle_data[
             (self.vehicle_data["Total_Price_GBP"] < base_price * 0.5)
             | (self.vehicle_data["Total_Price_GBP"] > base_price * 2.0)

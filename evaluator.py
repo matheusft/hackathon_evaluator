@@ -6,7 +6,7 @@ Handles evaluation of participant embedding submissions.
 """
 
 import numpy as np
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 from sklearn.metrics.pairwise import cosine_similarity
 
 
@@ -16,7 +16,7 @@ class EvaluationEngine:
     def __init__(self, config: Optional[Any] = None):
         """
         Initialize evaluation engine.
-        
+
         Args:
             config: EvaluationConfig object with criteria weights
         """
@@ -65,12 +65,8 @@ class EvaluationEngine:
                 }
 
             accuracy_score = self._calculate_accuracy_score(results=results)
-            performance_score = self._calculate_performance_score(
-                results=results
-            )
-            completeness_score = self._calculate_completeness_score(
-                results=results
-            )
+            performance_score = self._calculate_performance_score(results=results)
+            completeness_score = self._calculate_completeness_score(results=results)
 
             final_score = (
                 accuracy_score * self.evaluation_criteria["accuracy"]
@@ -91,8 +87,7 @@ class EvaluationEngine:
                             3,
                         ),
                         "performance": round(
-                            performance_score
-                            * self.evaluation_criteria["performance"],
+                            performance_score * self.evaluation_criteria["performance"],
                             3,
                         ),
                         "completeness": round(
@@ -112,9 +107,7 @@ class EvaluationEngine:
                 "score": 0.0,
             }
 
-    def _validate_submission_format(
-        self, results: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _validate_submission_format(self, results: Dict[str, Any]) -> Dict[str, Any]:
         """Validate the format of submission results."""
         required_fields = ["processed_data", "metadata"]
 
@@ -164,7 +157,7 @@ class EvaluationEngine:
 
             try:
                 embeddings_array = np.array(embeddings)
-                
+
                 if embeddings_array.ndim != 2:
                     continue
 
@@ -214,7 +207,7 @@ class EvaluationEngine:
         elif "price_similarity" in test_id and embeddings.shape[0] >= 3:
             sim_to_similar = similarities[0, 1]
             sim_to_distant = similarities[0, 2]
-            
+
             if sim_to_similar > sim_to_distant:
                 return min((sim_to_similar - sim_to_distant) * 2.0, 1.0)
             else:
@@ -222,13 +215,18 @@ class EvaluationEngine:
 
         elif "same_vehicle_diff_trim" in test_id and embeddings.shape[0] >= 3:
             avg_similarity = np.mean(
-                [similarities[i, j] for i in range(len(embeddings)) 
-                 for j in range(i + 1, len(embeddings))]
+                [
+                    similarities[i, j]
+                    for i in range(len(embeddings))
+                    for j in range(i + 1, len(embeddings))
+                ]
             )
             return min(avg_similarity * 1.2, 1.0)
 
         else:
-            avg_similarity = np.mean(similarities[np.triu_indices_from(similarities, k=1)])
+            avg_similarity = np.mean(
+                similarities[np.triu_indices_from(similarities, k=1)]
+            )
             return min(avg_similarity, 1.0)
 
     def _calculate_performance_score(self, results: Dict[str, Any]) -> float:

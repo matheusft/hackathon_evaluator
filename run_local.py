@@ -6,7 +6,7 @@ Local Development Runner
 Run the Flask evaluator service locally for development and testing.
 """
 
-import os
+
 import sys
 from pathlib import Path
 
@@ -36,10 +36,10 @@ def main():
     print("🚀 Starting Hackathon Evaluator Service...")
     print(f"📊 Leaderboard available at: http://localhost:{port}")
     print("🔗 API endpoints:")
-    print(f"   GET  /api/test-data?participant_name=YOUR_NAME")
-    print(f"   POST /api/submit-results")
-    print(f"   GET  /api/leaderboard")
-    print(f"   GET  /api/health")
+    print("   GET  /api/test-data?participant_name=YOUR_NAME")
+    print("   POST /api/submit-results")
+    print("   GET  /api/leaderboard")
+    print("   GET  /api/health")
     print("\n✨ Press Ctrl+C to stop the server")
 
     try:

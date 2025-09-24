@@ -48,7 +48,7 @@ except ImportError as e:
 try:
     from leaderboard_manager import LeaderboardManager
     from evaluator import EvaluationEngine
-    from config_manager import load_config, AppConfig
+    from config_manager import load_config
 
     print("✓ Successfully imported other modules")
 except ImportError as e:
