@@ -62,7 +62,7 @@ class LeaderboardManager:
             submission_tag: Tag for this submission (e.g., v1.0)
             score: Score achieved by the submission
         """
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now()
         score_float = float(score)
 
         with self._get_connection() as conn:
