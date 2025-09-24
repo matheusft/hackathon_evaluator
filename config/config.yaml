@@ -31,6 +31,26 @@ leaderboard:
 # Test data generation settings
 test_data:
   seed: 42  # Fixed seed ensures all participants get identical test data
+  dataset_path: "data/jlr_vehicle_configurations.csv"
+  
+  # Similarity thresholds for evaluation
+  thresholds:
+    high_similarity: 0.85  # Cosine similarity threshold for "very similar" configs
+    low_similarity: 0.30   # Cosine similarity threshold for "dissimilar" configs
+    single_option_diff_min: 0.75  # Min similarity when only 1 option differs
+    
+  # Test case weights (must sum to 1.0)
+  test_weights:
+    price_extremes: 0.15           # Test 1: Most vs least expensive
+    single_option_difference: 0.15  # Test 2: Configs differing by 1 option
+    model_year_sensitivity: 0.10    # Test 3: Same config, different model year
+    color_sensitivity: 0.10         # Test 4: Same config, different color
+    trim_level_similarity: 0.10     # Test 5: Same vehicle/year, different trims
+    vehicle_line_separation: 0.10   # Test 6: Different vehicle lines
+    derivative_clustering: 0.10     # Test 7: Same derivative should cluster
+    feature_count_correlation: 0.10 # Test 8: Feature count vs similarity
+    transitivity: 0.05              # Test 9: A~B, B~C => A~C
+    cross_year_comparison: 0.05     # Test 10: Same config across years
 
 # API settings
 api:
