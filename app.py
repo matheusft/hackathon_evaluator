@@ -86,8 +86,11 @@ def create_app(config_override: Optional[Dict[str, Any]] = None) -> Flask:
 
     # Initialize components with config
     leaderboard_manager = LeaderboardManager()
-    evaluation_engine = EvaluationEngine(config=app_config.evaluation)
-    test_data_provider = TestDataProvider(seed=app_config.test_data.seed)
+    evaluation_engine = EvaluationEngine(config=app_config)
+    test_data_provider = TestDataProvider(
+        seed=app_config.test_data.seed,
+        dataset_path=app_config.test_data.dataset_path,
+    )
 
     @app.route("/")
     def index():
