@@ -36,7 +36,8 @@ class LeaderboardManager:
         """Ensure the leaderboard table exists."""
         with self._get_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("""
+                cur.execute(
+                    """
                     CREATE TABLE IF NOT EXISTS leaderboard (
                         id SERIAL PRIMARY KEY,
                         participant_name VARCHAR(255) NOT NULL,
@@ -45,11 +46,14 @@ class LeaderboardManager:
                         score FLOAT NOT NULL,
                         UNIQUE(participant_name, submission_tag)
                     )
-                """)
-                cur.execute("""
+                """
+                )
+                cur.execute(
+                    """
                     CREATE INDEX IF NOT EXISTS idx_leaderboard_score 
                     ON leaderboard(score DESC)
-                """)
+                """
+                )
                 conn.commit()
 
     def update_leaderboard(
