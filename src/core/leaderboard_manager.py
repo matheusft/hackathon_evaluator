@@ -21,7 +21,8 @@ class LeaderboardManager:
         if not self.database_url:
             raise ValueError("DATABASE_URL environment variable not set")
 
-        self._ensure_table_exists()
+        # Defer database connection until first use
+        self._table_initialized = False
 
     def _get_connection(self):
         """Get database connection."""
@@ -29,9 +30,13 @@ class LeaderboardManager:
 
     def _ensure_table_exists(self) -> None:
         """Ensure the leaderboard table exists."""
-        with self._get_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
+        if self._table_initialized:
+            return
+            
+        try:
+            with self._get_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
                     """
                     CREATE TABLE IF NOT EXISTS leaderboard (
                         id SERIAL PRIMARY KEY,
@@ -50,6 +55,10 @@ class LeaderboardManager:
                 """
                 )
                 conn.commit()
+                self._table_initialized = True
+        except Exception:
+            # Don't raise here - let individual methods handle connection failures
+            pass
 
     def update_leaderboard(
         self, participant_name: str, submission_tag: str, score: float
@@ -62,6 +71,8 @@ class LeaderboardManager:
             submission_tag: Tag for this submission (e.g., v1.0)
             score: Score achieved by the submission
         """
+        self._ensure_table_exists()
+        
         timestamp = datetime.now()
         score_float = float(score)
 
@@ -91,6 +102,8 @@ class LeaderboardManager:
         Returns:
             List of leaderboard entries with rankings
         """
+        self._ensure_table_exists()
+        
         with self._get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(

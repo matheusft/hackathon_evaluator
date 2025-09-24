@@ -10,8 +10,10 @@ import os
 import sys
 from pathlib import Path
 
-# Load environment variables BEFORE importing app
-env_file = Path(__file__).parent / ".env"
+# Load environment variables BEFORE importing app  
+# Go up two levels to reach project root (from src/utils/)
+project_root = Path(__file__).parent.parent.parent
+env_file = project_root / ".env"
 if env_file.exists():
     with open(env_file) as f:
         for line in f:
@@ -22,11 +24,10 @@ if env_file.exists():
                 value = value.strip()
                 if key == "db_External_Database_URL":
                     os.environ["DATABASE_URL"] = value
-                    print(f"✅ Loaded DATABASE_URL from .env")
+                    print("✅ Loaded DATABASE_URL from .env")
 
-# Add src to Python path
-src_path = Path(__file__).parent / "src"
-sys.path.insert(0, str(src_path))
+# Add project root to Python path
+sys.path.insert(0, str(project_root))
 
 from app import create_app
 from config.config_manager import load_config
