@@ -38,7 +38,9 @@ def main():
     if "DATABASE_URL" not in os.environ:
         print("\n⚠️  DATABASE_URL not set!")
         print("Create a .env file with: db_External_Database_URL=postgresql://...")
-        print("Or get it from: https://dashboard.render.com/d/dpg-d39ta995pdvs73bnrlj0-a")
+        print(
+            "Or get it from: https://dashboard.render.com/d/dpg-d39ta995pdvs73bnrlj0-a"
+        )
         return
 
     # Load configuration

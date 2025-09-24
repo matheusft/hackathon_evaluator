@@ -25,7 +25,6 @@ evaluation:
 
 # Leaderboard settings
 leaderboard:
-  csv_path: "data/leaderboard.csv"
   max_displayed_participants: 100
   auto_refresh_seconds: 30
 
@@ -50,8 +49,6 @@ production:
   server:
     debug: false
     secret_key: null  # Will use environment variable
-  leaderboard:
-    csv_path: "./data/leaderboard.csv"
   deployment:
     environment: "production"
     log_level: "WARNING"

@@ -49,7 +49,6 @@ class EvaluationConfig:
 class LeaderboardConfig:
     """Leaderboard configuration settings."""
 
-    csv_path: str = "data/leaderboard.csv"
     max_displayed_participants: int = 100
     auto_refresh_seconds: int = 30
 
@@ -173,7 +172,6 @@ def _apply_env_overrides(config_dict: Dict[str, Any]) -> None:
         "SECRET_KEY": ["server", "secret_key"],
         "PORT": ["server", "port"],
         "DEBUG": ["server", "debug"],
-        "LEADERBOARD_CSV_PATH": ["leaderboard", "csv_path"],
     }
 
     for env_var, config_path in env_mappings.items():

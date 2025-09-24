@@ -15,13 +15,8 @@ from psycopg2.extras import RealDictCursor
 class LeaderboardManager:
     """Manages leaderboard operations for the hackathon."""
 
-    def __init__(self, csv_path: str = None):
-        """
-        Initialize leaderboard manager.
-
-        Args:
-            csv_path: Unused, kept for backwards compatibility
-        """
+    def __init__(self):
+        """Initialize leaderboard manager."""
         self.database_url = os.environ.get("DATABASE_URL")
         if not self.database_url:
             raise ValueError("DATABASE_URL environment variable not set")
