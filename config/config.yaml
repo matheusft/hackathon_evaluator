@@ -31,20 +31,7 @@ leaderboard:
 
 # Test data generation settings
 test_data:
-  templates:
-    simple_math:
-      description: "Basic mathematical operations"
-      weight: 0.3
-    text_processing:
-      description: "Text analysis and processing"
-      weight: 0.3
-    data_analysis:
-      description: "Data analysis and statistics"
-      weight: 0.4
-  
-  customization:
-    variation_range: 5  # ± range for numerical variations
-    text_pool_size: 6   # Number of text variations available
+  seed: 42  # Fixed seed ensures all participants get identical test data
 
 # API settings
 api:

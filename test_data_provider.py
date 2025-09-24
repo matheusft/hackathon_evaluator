@@ -8,7 +8,7 @@ Provides vehicle configuration test data to participants for evaluation.
 import random
 import hashlib
 import pandas as pd
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from datetime import datetime
 from pathlib import Path
 
@@ -16,8 +16,13 @@ from pathlib import Path
 class TestDataProvider:
     """Provides vehicle configuration test data for participants to process."""
 
-    def __init__(self):
-        """Initialize test data provider."""
+    def __init__(self, seed: Optional[int] = None):
+        """Initialize test data provider.
+
+        Args:
+            seed: Fixed seed for random generation to ensure consistency
+        """
+        self.seed = seed if seed is not None else 42
         self.vehicle_data = self._load_vehicle_data()
         self.test_case_generators = self._initialize_test_generators()
 
@@ -73,14 +78,13 @@ class TestDataProvider:
         Returns:
             Test data package for the participant
         """
-        seed_string = f"{participant_name}_{submission_tag}"
-        random.seed(hashlib.md5(seed_string.encode()).hexdigest())
+        random.seed(self.seed)
 
         test_data_id = hashlib.sha256(
             f"{participant_name}_{submission_tag}_{datetime.utcnow().isoformat()}".encode()
         ).hexdigest()[:16]
 
-        test_cases = self._generate_test_cases(participant_name=participant_name)
+        test_cases = self._generate_test_cases()
 
         return {
             "test_data_id": test_data_id,
@@ -114,20 +118,18 @@ class TestDataProvider:
             },
         }
 
-    def _generate_test_cases(self, participant_name: str) -> List[Dict[str, Any]]:
-        """Generate specific test cases for a participant."""
+    def _generate_test_cases(self) -> List[Dict[str, Any]]:
+        """Generate test cases using fixed seed for consistency."""
         if self.vehicle_data.empty:
             return []
 
-        participant_hash = hashlib.md5(participant_name.encode()).hexdigest()
-        seed_value = int(participant_hash[:8], 16)
-        random.seed(seed_value)
+        random.seed(self.seed)
 
         test_cases = []
 
-        for generator_config in self.test_case_generators:
-            for i in range(2):
-                test_case = generator_config["generator"](seed=seed_value + i)
+        for i, generator_config in enumerate(self.test_case_generators):
+            for j in range(2):
+                test_case = generator_config["generator"](seed=self.seed + i * 10 + j)
                 if test_case:
                     test_case["test_id"] = f"{generator_config['name']}_{i+1}"
                     test_case["type"] = generator_config["name"]
@@ -256,5 +258,5 @@ class TestDataProvider:
             return []
         try:
             return [f.strip().strip("'\"") for f in feature_str.strip("[]").split(",")]
-        except:
+        except Exception:
             return []

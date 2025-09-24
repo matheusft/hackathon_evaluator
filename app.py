@@ -35,12 +35,13 @@ except ImportError as e:
     print(f"✗ Failed to import test_data_provider: {e}")
     print(f"Current working directory: {os.getcwd()}")
     print(f"Python path: {sys.path}")
-    print(
-        f"Files in current directory: {[f for f in os.listdir('.') if f.endswith('.py')]}"
-    )
+    py_files = [f for f in os.listdir(".") if f.endswith(".py")]
+    print(f"Files in current directory: {py_files}")
 
-    # Create a dummy class to continue
     class TestDataProvider:
+        def __init__(self, seed=42):
+            self.seed = seed
+
         def generate_test_data(self, participant_name, submission_tag):
             return {"error": "test_data_provider not available"}
 
@@ -48,7 +49,7 @@ except ImportError as e:
 try:
     from leaderboard_manager import LeaderboardManager
     from evaluator import EvaluationEngine
-    from config_manager import load_config
+    from config.config_manager import load_config
 
     print("✓ Successfully imported other modules")
 except ImportError as e:
@@ -89,7 +90,7 @@ def create_app(config_override: Optional[Dict[str, Any]] = None) -> Flask:
         csv_path=app.config["LEADERBOARD_CSV_PATH"]
     )
     evaluation_engine = EvaluationEngine(config=app_config.evaluation)
-    test_data_provider = TestDataProvider()
+    test_data_provider = TestDataProvider(seed=app_config.test_data.seed)
 
     @app.route("/")
     def index():
@@ -127,14 +128,18 @@ def create_app(config_override: Optional[Dict[str, Any]] = None) -> Flask:
                 return jsonify({"error": "participant_name parameter required"}), 400
 
             test_data = test_data_provider.generate_test_data(
-                participant_name=participant_name, submission_tag=submission_tag
+                participant_name=participant_name,
+                submission_tag=submission_tag,
             )
 
             return jsonify(
                 {
                     "status": "success",
                     "test_data": test_data,
-                    "instructions": "Process this data and submit results to /api/submit-results",
+                    "instructions": (
+                        "Process this data and submit results to "
+                        "/api/submit-results"
+                    ),
                 }
             )
 
@@ -212,7 +217,10 @@ def create_app(config_override: Optional[Dict[str, Any]] = None) -> Flask:
                     "score": evaluation_result["score"],
                     "rank": current_rank,
                     "evaluation_details": evaluation_result.get("details", {}),
-                    "message": f'Submission successful! Score: {evaluation_result["score"]:.3f}',
+                    "message": (
+                        f"Submission successful! Score: "
+                        f'{evaluation_result["score"]:.3f}'
+                    ),
                 }
             )
 

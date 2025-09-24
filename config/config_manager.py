@@ -55,12 +55,20 @@ class LeaderboardConfig:
 
 
 @dataclass
+class TestDataConfig:
+    """Test data generation configuration settings."""
+
+    seed: int = 42
+
+
+@dataclass
 class AppConfig:
     """Main application configuration."""
 
     server: ServerConfig
     evaluation: EvaluationConfig
     leaderboard: LeaderboardConfig
+    test_data: TestDataConfig
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "AppConfig":
@@ -68,11 +76,13 @@ class AppConfig:
         server_config = ServerConfig(**config_dict.get("server", {}))
         evaluation_config = EvaluationConfig(**config_dict.get("evaluation", {}))
         leaderboard_config = LeaderboardConfig(**config_dict.get("leaderboard", {}))
+        test_data_config = TestDataConfig(**config_dict.get("test_data", {}))
 
         return cls(
             server=server_config,
             evaluation=evaluation_config,
             leaderboard=leaderboard_config,
+            test_data=test_data_config,
         )
 
 
