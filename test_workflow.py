@@ -43,7 +43,7 @@ def test_participant_workflow(
         return
 
     test_data = test_data_response.json()
-    print(f"✅ Received test data")
+    print("✅ Received test data")
     print(f"📋 Got {len(test_data)} test cases")
 
     # Step 2: Mock processing of test data
