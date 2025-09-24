@@ -26,35 +26,21 @@ working_dir = os.getcwd()
 if working_dir not in sys.path:
     sys.path.insert(0, working_dir)
 
-# Try importing modules with detailed error handling
+# Import core modules
 try:
-    from test_data_provider import TestDataProvider
-
-    print("✓ Successfully imported test_data_provider")
-except ImportError as e:
-    print(f"✗ Failed to import test_data_provider: {e}")
-    print(f"Current working directory: {os.getcwd()}")
-    print(f"Python path: {sys.path}")
-    py_files = [f for f in os.listdir(".") if f.endswith(".py")]
-    print(f"Files in current directory: {py_files}")
-
-    class TestDataProvider:
-        def __init__(self, seed=42):
-            self.seed = seed
-
-        def generate_test_data(self, participant_name, submission_tag):
-            return {"error": "test_data_provider not available"}
-
-
-try:
-    from leaderboard_manager import LeaderboardManager
-    from evaluator import EvaluationEngine
+    from src.core.test_data_provider import TestDataProvider
+    from src.core.leaderboard_manager import LeaderboardManager
+    from src.core.evaluator import EvaluationEngine
     from config.config_manager import load_config
-
-    print("✓ Successfully imported other modules")
-except ImportError as e:
-    print(f"✗ Failed to import other modules: {e}")
-    raise
+except ImportError:
+    # Fallback to old location for transition compatibility
+    try:
+        from test_data_provider import TestDataProvider
+        from leaderboard_manager import LeaderboardManager
+        from evaluator import EvaluationEngine
+        from config.config_manager import load_config
+    except ImportError as e:
+        raise ImportError(f"Failed to import required modules: {e}")
 
 
 def create_app(config_override: Optional[Dict[str, Any]] = None) -> Flask:
@@ -236,9 +222,8 @@ def create_app(config_override: Optional[Dict[str, Any]] = None) -> Flask:
     return app
 
 
-# Create the Flask app instance for production deployment
-app = create_app()
-
 if __name__ == "__main__":
+    # Only create app if running directly (not when imported)
+    app = create_app()
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=app.config["DEBUG"])
