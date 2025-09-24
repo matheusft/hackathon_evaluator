@@ -42,13 +42,13 @@ def test_participant_workflow(
         print(f"❌ Failed to get test data: {test_data_response.text}")
         return
 
-    test_data = test_data_response.json()["test_data"]
-    print(f"✅ Received test data with ID: {test_data['test_data_id']}")
-    print(f"📋 Got {len(test_data['test_cases'])} test cases")
+    test_data = test_data_response.json()
+    print(f"✅ Received test data")
+    print(f"📋 Got {len(test_data)} test cases")
 
     # Step 2: Mock processing of test data
     print("\n⚙️  Step 2: Processing test data...")
-    processed_results = process_test_data(test_data["test_cases"])
+    processed_results = process_test_data(test_data)
     print(f"✅ Processed {len(processed_results)} test cases")
 
     # Step 3: Submit results
@@ -56,7 +56,7 @@ def test_participant_workflow(
     submission_payload = {
         "participant_name": participant_name,
         "submission_tag": submission_tag,
-        "test_data_id": test_data["test_data_id"],
+        "test_data_id": f"{participant_name}_{submission_tag}",
         "results": {
             "processed_data": processed_results,
             "metadata": {
@@ -111,12 +111,12 @@ def test_participant_workflow(
     print(f"\n🎉 Workflow complete! Visit {base_url} to see the leaderboard.")
 
 
-def process_test_data(test_cases: list) -> Dict[str, Any]:
+def process_test_data(test_data: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Mock processing of vehicle configuration test cases.
+    Mock processing of vehicle configuration test data.
 
     Args:
-        test_cases: List of vehicle configuration test cases to process
+        test_data: Dictionary mapping test IDs to vehicle configurations
 
     Returns:
         Dictionary with processed results (mock embeddings)
@@ -125,9 +125,7 @@ def process_test_data(test_cases: list) -> Dict[str, Any]:
 
     results = {}
 
-    for test_case in test_cases:
-        test_id = test_case["test_id"]
-        vehicle_configs = test_case["input_data"]["vehicle_configs"]
+    for test_id, vehicle_configs in test_data.items():
         num_configs = len(vehicle_configs)
 
         mock_embeddings = [

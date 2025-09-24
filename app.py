@@ -132,16 +132,7 @@ def create_app(config_override: Optional[Dict[str, Any]] = None) -> Flask:
                 submission_tag=submission_tag,
             )
 
-            return jsonify(
-                {
-                    "status": "success",
-                    "test_data": test_data,
-                    "instructions": (
-                        "Process this data and submit results to "
-                        "/api/submit-results"
-                    ),
-                }
-            )
+            return jsonify(test_data)
 
         except Exception as e:
             return jsonify({"error": f"Failed to generate test data: {str(e)}"}), 500
