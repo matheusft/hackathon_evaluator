@@ -68,6 +68,7 @@ class LeaderboardManager:
             score: Score achieved by the submission
         """
         timestamp = datetime.utcnow()
+        score_float = float(score)
 
         with self._get_connection() as conn:
             with conn.cursor() as cur:
@@ -81,7 +82,7 @@ class LeaderboardManager:
                         score = EXCLUDED.score,
                         timestamp = EXCLUDED.timestamp
                     """,
-                    (participant_name, submission_tag, timestamp, score),
+                    (participant_name, submission_tag, timestamp, score_float),
                 )
                 conn.commit()
 
