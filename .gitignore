@@ -68,5 +68,6 @@ logs/
 *.tmp
 *.temp
 temp/
-postgres_cheatsheet.md
-EVALUATION_METHODOLOGY.md
+
+# Verification scripts (for local testing only)
+scripts/verify_deployment.py
