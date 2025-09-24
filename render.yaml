@@ -10,9 +10,7 @@ services:
         value: production
       - key: SECRET_KEY
         generateValue: true
-      - key: LEADERBOARD_CSV_PATH
-        value: /var/data/leaderboard.csv
-    disk:
-      name: leaderboard-data
-      mountPath: /var/data
-      sizeGB: 1
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ds-hackathon-leaderboard
+          property: connectionString

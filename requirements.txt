@@ -11,3 +11,4 @@ requests==2.32.5
 pandas
 scikit-learn
 numpy
+psycopg2-binary

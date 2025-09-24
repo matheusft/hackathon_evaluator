@@ -77,7 +77,6 @@ def create_app(config_override: Optional[Dict[str, Any]] = None) -> Flask:
         {
             "SECRET_KEY": app_config.server.secret_key,
             "DEBUG": app_config.server.debug,
-            "LEADERBOARD_CSV_PATH": app_config.leaderboard.csv_path,
         }
     )
 
@@ -86,9 +85,7 @@ def create_app(config_override: Optional[Dict[str, Any]] = None) -> Flask:
         app.config.update(config_override)
 
     # Initialize components with config
-    leaderboard_manager = LeaderboardManager(
-        csv_path=app.config["LEADERBOARD_CSV_PATH"]
-    )
+    leaderboard_manager = LeaderboardManager()
     evaluation_engine = EvaluationEngine(config=app_config.evaluation)
     test_data_provider = TestDataProvider(seed=app_config.test_data.seed)
 

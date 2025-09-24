@@ -2,41 +2,55 @@
 Leaderboard Management Module
 ============================
 
-Manages the hackathon leaderboard stored in CSV format.
+Manages the hackathon leaderboard stored in PostgreSQL database.
 """
 
-import csv
 import os
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from datetime import datetime
-from pathlib import Path
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 
 class LeaderboardManager:
     """Manages leaderboard operations for the hackathon."""
 
-    def __init__(self, csv_path: str):
+    def __init__(self, csv_path: str = None):
         """
         Initialize leaderboard manager.
 
         Args:
-            csv_path: Path to the leaderboard CSV file
+            csv_path: Unused, kept for backwards compatibility
         """
-        self.csv_path = Path(csv_path)
-        self._ensure_csv_exists()
+        self.database_url = os.environ.get("DATABASE_URL")
+        if not self.database_url:
+            raise ValueError("DATABASE_URL environment variable not set")
 
-    def _ensure_csv_exists(self) -> None:
-        """Ensure the CSV file exists with proper headers."""
-        if not self.csv_path.exists():
-            # Create directory if it doesn't exist
-            self.csv_path.parent.mkdir(parents=True, exist_ok=True)
+        self._ensure_table_exists()
 
-            # Create CSV with headers
-            with open(self.csv_path, "w", newline="") as csvfile:
-                writer = csv.writer(csvfile)
-                writer.writerow(
-                    ["participant_name", "submission_tag", "timestamp", "score"]
-                )
+    def _get_connection(self):
+        """Get database connection."""
+        return psycopg2.connect(self.database_url)
+
+    def _ensure_table_exists(self) -> None:
+        """Ensure the leaderboard table exists."""
+        with self._get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS leaderboard (
+                        id SERIAL PRIMARY KEY,
+                        participant_name VARCHAR(255) NOT NULL,
+                        submission_tag VARCHAR(100) NOT NULL,
+                        timestamp TIMESTAMP NOT NULL,
+                        score FLOAT NOT NULL,
+                        UNIQUE(participant_name, submission_tag)
+                    )
+                """)
+                cur.execute("""
+                    CREATE INDEX IF NOT EXISTS idx_leaderboard_score 
+                    ON leaderboard(score DESC)
+                """)
+                conn.commit()
 
     def update_leaderboard(
         self, participant_name: str, submission_tag: str, score: float
@@ -49,120 +63,89 @@ class LeaderboardManager:
             submission_tag: Tag for this submission (e.g., v1.0)
             score: Score achieved by the submission
         """
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.utcnow()
 
-        # Read existing data
-        existing_data = []
-        if self.csv_path.exists():
-            with open(self.csv_path, "r", newline="") as csvfile:
-                reader = csv.DictReader(csvfile)
-                existing_data = list(reader)
+        with self._get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO leaderboard 
+                        (participant_name, submission_tag, timestamp, score)
+                    VALUES (%s, %s, %s, %s)
+                    ON CONFLICT (participant_name, submission_tag) 
+                    DO UPDATE SET 
+                        score = EXCLUDED.score,
+                        timestamp = EXCLUDED.timestamp
+                    """,
+                    (participant_name, submission_tag, timestamp, score),
+                )
+                conn.commit()
 
-        # Check if participant already exists
-        participant_exists = False
-        for i, row in enumerate(existing_data):
-            if row["participant_name"] == participant_name:
-                # Update if score is better
-                if float(row["score"]) < score:
-                    existing_data[i] = {
-                        "participant_name": participant_name,
-                        "submission_tag": submission_tag,
-                        "timestamp": timestamp,
-                        "score": str(score),
-                    }
-                participant_exists = True
-                break
-
-        # Add new participant if doesn't exist
-        if not participant_exists:
-            existing_data.append(
-                {
-                    "participant_name": participant_name,
-                    "submission_tag": submission_tag,
-                    "timestamp": timestamp,
-                    "score": str(score),
-                }
-            )
-
-        # Sort by score (descending) and write back
-        existing_data.sort(key=lambda x: float(x["score"]), reverse=True)
-
-        with open(self.csv_path, "w", newline="") as csvfile:
-            fieldnames = ["participant_name", "submission_tag", "timestamp", "score"]
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(existing_data)
-
-    def get_leaderboard(self) -> List[Dict[str, Any]]:
+    def get_leaderboard(self, limit: int = 100) -> List[Dict[str, Any]]:
         """
         Get current leaderboard sorted by score.
 
-        Returns:
-            List of leaderboard entries with rank information
-        """
-        if not self.csv_path.exists():
-            return []
+        Args:
+            limit: Maximum number of entries to return
 
-        leaderboard = []
-        with open(self.csv_path, "r", newline="") as csvfile:
-            reader = csv.DictReader(csvfile)
-            for rank, row in enumerate(reader, 1):
-                leaderboard.append(
+        Returns:
+            List of leaderboard entries with rankings
+        """
+        with self._get_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    """
+                    SELECT 
+                        participant_name,
+                        submission_tag,
+                        timestamp,
+                        score,
+                        RANK() OVER (ORDER BY score DESC) as rank
+                    FROM leaderboard
+                    ORDER BY score DESC
+                    LIMIT %s
+                    """,
+                    (limit,),
+                )
+                results = cur.fetchall()
+
+                return [
                     {
-                        "rank": rank,
                         "participant_name": row["participant_name"],
                         "submission_tag": row["submission_tag"],
-                        "timestamp": row["timestamp"],
+                        "timestamp": row["timestamp"].isoformat(),
                         "score": float(row["score"]),
+                        "rank": int(row["rank"]),
                         "formatted_score": f"{float(row['score']):.3f}",
                     }
+                    for row in results
+                ]
+
+    def get_participant_rank(self, participant_name: str) -> int:
+        """
+        Get the rank of a specific participant.
+
+        Args:
+            participant_name: Name of the participant
+
+        Returns:
+            Rank of the participant (1-indexed), or 0 if not found
+        """
+        with self._get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    WITH ranked_leaderboard AS (
+                        SELECT 
+                            participant_name,
+                            RANK() OVER (ORDER BY score DESC) as rank
+                        FROM leaderboard
+                    )
+                    SELECT rank FROM ranked_leaderboard
+                    WHERE participant_name = %s
+                    LIMIT 1
+                    """,
+                    (participant_name,),
                 )
-
-        return leaderboard
-
-    def get_participant_rank(self, participant_name: str) -> Optional[int]:
-        """
-        Get current rank of a specific participant.
-
-        Args:
-            participant_name: Name of the participant
-
-        Returns:
-            Current rank (1-indexed) or None if not found
-        """
-        leaderboard = self.get_leaderboard()
-        for entry in leaderboard:
-            if entry["participant_name"] == participant_name:
-                return entry["rank"]
-        return None
-
-    def get_top_n(self, n: int = 10) -> List[Dict[str, Any]]:
-        """
-        Get top N participants from leaderboard.
-
-        Args:
-            n: Number of top participants to return
-
-        Returns:
-            List of top N participants
-        """
-        leaderboard = self.get_leaderboard()
-        return leaderboard[:n]
-
-    def get_participant_history(self, participant_name: str) -> List[Dict[str, Any]]:
-        """
-        Get submission history for a specific participant.
-        Note: Current implementation only keeps best score.
-
-        Args:
-            participant_name: Name of the participant
-
-        Returns:
-            List of submissions (currently just latest)
-        """
-        leaderboard = self.get_leaderboard()
-        return [
-            entry
-            for entry in leaderboard
-            if entry["participant_name"] == participant_name
-        ]
+                result = cur.fetchone()
+                return int(result[0]) if result else 0
