@@ -11,7 +11,6 @@ Demonstrates the complete participant workflow:
 """
 
 import requests
-import json
 import time
 from typing import Dict, Any
 
@@ -80,7 +79,7 @@ def test_participant_workflow(
         return
 
     submission_result = submit_response.json()
-    print(f"✅ Submission successful!")
+    print("✅ Submission successful!")
     print(f"🎯 Score: {submission_result['score']}")
     print(f"🏆 Rank: #{submission_result['rank']}")
 
@@ -104,93 +103,48 @@ def test_participant_workflow(
             if entry["rank"] <= 3
             else f"#{entry['rank']}"
         )
-        print(
-            f"  {medal} {entry['participant_name']} - {entry['formatted_score']} ({entry['submission_tag']})"
-        )
+        participant = entry["participant_name"]
+        score = entry["formatted_score"]
+        tag = entry["submission_tag"]
+        print(f"  {medal} {participant} - {score} ({tag})")
 
     print(f"\n🎉 Workflow complete! Visit {base_url} to see the leaderboard.")
 
 
 def process_test_data(test_cases: list) -> Dict[str, Any]:
     """
-    Mock processing of test cases.
+    Mock processing of vehicle configuration test cases.
 
     Args:
-        test_cases: List of test cases to process
+        test_cases: List of vehicle configuration test cases to process
 
     Returns:
-        Dictionary with processed results
+        Dictionary with processed results (mock embeddings)
     """
+    import random
+
     results = {}
 
     for test_case in test_cases:
         test_id = test_case["test_id"]
-        test_type = test_case["type"]
-        input_data = test_case["input_data"]
+        vehicle_configs = test_case["input_data"]["vehicle_configs"]
+        num_configs = len(vehicle_configs)
 
-        # Mock processing based on test type
-        if test_type == "simple_math":
-            if input_data["operation"] == "add":
-                result = sum(input_data["numbers"])
-            elif input_data["operation"] == "multiply":
-                result = 1
-                for num in input_data["numbers"]:
-                    result *= num
-            elif input_data["operation"] == "subtract":
-                result = input_data["numbers"][0] - input_data["numbers"][1]
-            else:
-                result = 0
+        mock_embeddings = [
+            [random.random() for _ in range(128)] for _ in range(num_configs)
+        ]
 
-            results[test_id] = {
-                "result": result,
-                "operation_performed": f"{input_data['operation']} on {input_data['numbers']}",
-            }
-
-        elif test_type == "text_processing":
-            text = input_data["text"]
-            task = input_data["task"]
-
-            if task == "count_words":
-                result = len(text.split())
-            elif task == "reverse":
-                result = text[::-1]
-            elif task == "uppercase":
-                result = text.upper()
-            else:
-                result = text
-
-            results[test_id] = {
-                "result": result,
-                "original_text": text,
-                "task_completed": True,
-            }
-
-        elif test_type == "data_analysis":
-            dataset = input_data["dataset"]
-            task = input_data["task"]
-
-            if task == "calculate_mean":
-                result = sum(dataset) / len(dataset)
-            elif task == "find_max":
-                result = max(dataset)
-            elif task == "sum_all":
-                result = sum(dataset)
-            else:
-                result = 0
-
-            results[test_id] = {
-                "result": result,
-                "dataset_size": len(dataset),
-                "calculation_method": task,
-            }
+        results[test_id] = {
+            "embeddings": mock_embeddings,
+            "num_configs": num_configs,
+        }
 
     return results
 
 
 if __name__ == "__main__":
-    # Test multiple participants
     participants = [
-        ("TeamAlpha", "v1.0"),
+        ("TeamAlphaBetaGamma", "v1.0"),
         ("TeamBeta", "v2.1"),
         ("TeamGamma", "v1.5"),
     ]
