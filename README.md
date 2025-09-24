@@ -28,10 +28,6 @@ hackathon_evaluator/
 │       └── run_local.py       # Local development server
 ├── scripts/
 │   └── test_workflow.py       # Testing and demo script
-├── docs/
-│   ├── DEPLOYMENT_CHECKLIST.md # Deployment guide
-│   ├── EVALUATION_METHODOLOGY.md # Evaluation documentation
-│   └── postgres_cheatsheet.md  # Database reference
 ├── config/
 │   ├── config_manager.py      # Configuration loader
 │   └── config.yaml            # YAML configuration

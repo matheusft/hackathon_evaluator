@@ -69,5 +69,5 @@ logs/
 *.temp
 temp/
 
-# Verification scripts (for local testing only)
-scripts/verify_deployment.py
+
+docs/
