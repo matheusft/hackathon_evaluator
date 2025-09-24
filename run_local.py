@@ -15,7 +15,7 @@ src_path = Path(__file__).parent / "src"
 sys.path.insert(0, str(src_path))
 
 from app import create_app
-from config_manager import load_config
+from config.config_manager import load_config
 
 
 def main():
