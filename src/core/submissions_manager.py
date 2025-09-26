@@ -101,10 +101,16 @@ class SubmissionsManager:
 
             timestamp = datetime.now()
 
-            score_columns = {
-                f"test_{i}_score": test_scores.get(f"test_{i}", None) 
-                for i in range(1, 21)
-            }
+            # Convert numpy types to Python native types
+            final_score_native = float(final_score) if final_score is not None else None
+            
+            score_columns = {}
+            for i in range(1, 21):
+                score_value = test_scores.get(f"test_{i}", None)
+                if score_value is not None:
+                    score_columns[f"test_{i}_score"] = float(score_value)
+                else:
+                    score_columns[f"test_{i}_score"] = None
 
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
@@ -120,7 +126,7 @@ class SubmissionsManager:
                         user_name,
                         submission_tag,
                         timestamp,
-                        final_score,
+                        final_score_native,
                         leaderboard_rank,
                     ] + list(score_columns.values())
 
