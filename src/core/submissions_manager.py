@@ -6,9 +6,12 @@ Manages user submissions data stored in PostgreSQL database.
 """
 
 import os
+import logging
 from typing import Dict, Optional
 from datetime import datetime
 import psycopg2
+
+logger = logging.getLogger(__name__)
 
 
 class SubmissionsManager:
@@ -145,5 +148,5 @@ class SubmissionsManager:
                     return True
         except Exception as e:
             # Log the error but don't crash the submission process
-            print(f"Warning: Failed to record submission to database: {e}")
+            logger.warning("Failed to record submission to database for user %s: %s", user_name, e)
             return False
