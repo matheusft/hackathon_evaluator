@@ -5,10 +5,13 @@ Evaluation Engine Module
 Handles evaluation of participant embedding submissions with test-specific metrics.
 """
 
+import logging
 from typing import Any, Dict, Optional
 
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
+
+logger = logging.getLogger(__name__)
 
 
 class EvaluationEngine:
@@ -60,16 +63,24 @@ class EvaluationEngine:
         Returns:
             Evaluation result with score and details
         """
+        logger.info("Starting evaluation for participant %s, submission %s", 
+                   participant_name, submission_tag)
+        
         try:
             validation_result = self._validate_submission_format(results=results)
             if not validation_result["valid"]:
+                logger.warning("Submission validation failed for %s: %s", 
+                             participant_name, validation_result["error"])
                 return {
                     "valid": False,
                     "error": validation_result["error"],
                     "score": 0.0,
                 }
 
+            logger.info("Running evaluation tests for %s", participant_name)
             test_scores = self._evaluate_all_tests(results=results)
+            logger.info("Individual test scores for %s: %s", participant_name, 
+                       {k: round(v, 3) for k, v in test_scores.items()})
 
             test_weight_mapping = {
                 "test_1": self.test_weights.get("price_extremes", 0.15),
@@ -88,6 +99,8 @@ class EvaluationEngine:
                 test_scores.get(test_id, 0.0) * test_weight_mapping.get(test_id, 0.0)
                 for test_id in test_weight_mapping.keys()
             )
+            
+            logger.info("Final weighted score for %s: %.3f", participant_name, final_score)
 
             return {
                 "valid": True,
@@ -98,6 +111,7 @@ class EvaluationEngine:
             }
 
         except Exception as e:
+            logger.error("Evaluation failed for participant %s: %s", participant_name, str(e))
             return {
                 "valid": False,
                 "error": f"Evaluation error: {str(e)}",
