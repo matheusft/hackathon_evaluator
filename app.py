@@ -14,6 +14,7 @@ from flask import Flask, request, jsonify, render_template
 from typing import Dict, Any, Optional
 import os
 import sys
+import logging
 from datetime import datetime
 
 # Ensure current directory is in Python path for imports
@@ -56,6 +57,13 @@ def create_app(config_override: Optional[Dict[str, Any]] = None) -> Flask:
         Configured Flask app
     """
     app = Flask(__name__, template_folder="templates")
+
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    logger = logging.getLogger(__name__)
 
     # Load configuration from YAML
     app_config = load_config()
@@ -201,7 +209,8 @@ def create_app(config_override: Optional[Dict[str, Any]] = None) -> Flask:
                 leaderboard_rank=current_rank,
             )
             if not success:
-                print(f"Warning: Could not record submission to database for {data['participant_name']}")
+                logger.warning("Could not record submission to database for %s", 
+                             data['participant_name'])
 
             return jsonify(
                 {
