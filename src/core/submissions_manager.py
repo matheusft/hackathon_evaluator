@@ -7,7 +7,7 @@ Manages user submissions data stored in PostgreSQL database.
 
 import os
 import logging
-from typing import Dict, Optional
+from typing import Dict
 from datetime import datetime
 import psycopg2
 
@@ -41,11 +41,11 @@ class SubmissionsManager:
                         """
                         CREATE TABLE IF NOT EXISTS user_submissions (
                             id SERIAL PRIMARY KEY,
-                            timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                            timestamp TIMESTAMP WITH TIME ZONE 
+                                DEFAULT CURRENT_TIMESTAMP,
                             user_name VARCHAR(255) NOT NULL,
                             submission_tag VARCHAR(255) NOT NULL,
                             final_score DECIMAL(6,3) NOT NULL,
-                            leaderboard_rank INTEGER,
                             test_1_score DECIMAL(6,3),
                             test_2_score DECIMAL(6,3),
                             test_3_score DECIMAL(6,3),
@@ -81,7 +81,6 @@ class SubmissionsManager:
         submission_tag: str,
         final_score: float,
         test_scores: Dict[str, float],
-        leaderboard_rank: Optional[int] = None,
     ) -> bool:
         """
         Record a user submission with individual test scores.
@@ -90,9 +89,7 @@ class SubmissionsManager:
             user_name: Name of the user/participant
             submission_tag: Tag for this submission
             final_score: Final weighted score
-            test_scores: Dictionary of individual test scores (test_1, test_2, etc.)
-            leaderboard_rank: Current rank on leaderboard
-            
+            test_scores: Dict of individual test scores (test_1, test_2, etc.)
         Returns:
             bool: True if submission was recorded successfully, False otherwise
         """
@@ -119,7 +116,6 @@ class SubmissionsManager:
                         "submission_tag",
                         "timestamp",
                         "final_score",
-                        "leaderboard_rank",
                     ] + list(score_columns.keys())
 
                     values = [
@@ -127,7 +123,6 @@ class SubmissionsManager:
                         submission_tag,
                         timestamp,
                         final_score_native,
-                        leaderboard_rank,
                     ] + list(score_columns.values())
 
                     placeholders = ", ".join(["%s"] * len(values))
@@ -154,5 +149,8 @@ class SubmissionsManager:
                     return True
         except Exception as e:
             # Log the error but don't crash the submission process
-            logger.warning("Failed to record submission to database for user %s: %s", user_name, e)
+            logger.warning(
+                "Failed to record submission to database for user %s: %s",
+                user_name, e
+            )
             return False
