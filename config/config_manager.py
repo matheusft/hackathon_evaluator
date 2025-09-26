@@ -7,9 +7,12 @@ Handles loading and managing configuration from YAML files.
 
 import yaml
 import os
+import logging
 from typing import Dict, Any, Optional
 from pathlib import Path
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -134,13 +137,13 @@ def load_config(config_path: Optional[str] = None) -> AppConfig:
                 break
 
         if config_path is None:
-            print("Config file not found in any expected location, using defaults")
+            logger.info("Config file not found in any expected location, using defaults")
             return AppConfig.from_dict({})
 
     config_path = Path(config_path)
 
     if not config_path.exists():
-        print(f"Config file not found at {config_path}, using defaults")
+        logger.info("Config file not found at %s, using defaults", config_path)
         return AppConfig.from_dict({})
 
     try:
@@ -160,8 +163,8 @@ def load_config(config_path: Optional[str] = None) -> AppConfig:
         return AppConfig.from_dict(config_dict)
 
     except Exception as e:
-        print(f"Error loading config from {config_path}: {e}")
-        print("Using default configuration")
+        logger.error("Error loading config from %s: %s", config_path, e)
+        logger.info("Using default configuration")
         return AppConfig.from_dict({})
 
 
