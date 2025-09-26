@@ -6,10 +6,13 @@ Manages the hackathon leaderboard stored in PostgreSQL database.
 """
 
 import os
+import logging
 from typing import List, Dict, Any
 from datetime import datetime
 import psycopg2
 from psycopg2.extras import RealDictCursor
+
+logger = logging.getLogger(__name__)
 
 
 class LeaderboardManager:
@@ -71,6 +74,9 @@ class LeaderboardManager:
             submission_tag: Tag for this submission (e.g., v1.0)
             score: Score achieved by the submission
         """
+        logger.info("Updating leaderboard for %s (%s) with score %.3f", 
+                   participant_name, submission_tag, score)
+        
         self._ensure_table_exists()
         
         timestamp = datetime.now()
@@ -102,6 +108,7 @@ class LeaderboardManager:
         Returns:
             List of leaderboard entries with rankings
         """
+        logger.debug("Retrieving leaderboard with limit %d", limit)
         self._ensure_table_exists()
         
         with self._get_connection() as conn:
@@ -144,6 +151,7 @@ class LeaderboardManager:
         Returns:
             Rank of the participant (1-indexed), or 0 if not found
         """
+        logger.debug("Looking up rank for participant %s", participant_name)
         with self._get_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
