@@ -23,8 +23,8 @@ class SubmissionsManager:
         self._table_initialized = False
 
     def _get_connection(self):
-        """Get database connection."""
-        return psycopg2.connect(self.database_url)
+        """Get database connection with timeout."""
+        return psycopg2.connect(self.database_url, connect_timeout=10)
 
     def _ensure_table_exists(self) -> None:
         """Ensure the user_submissions table exists."""
@@ -79,7 +79,7 @@ class SubmissionsManager:
         final_score: float,
         test_scores: Dict[str, float],
         leaderboard_rank: Optional[int] = None,
-    ) -> None:
+    ) -> bool:
         """
         Record a user submission with individual test scores.
 
@@ -89,52 +89,61 @@ class SubmissionsManager:
             final_score: Final weighted score
             test_scores: Dictionary of individual test scores (test_1, test_2, etc.)
             leaderboard_rank: Current rank on leaderboard
+            
+        Returns:
+            bool: True if submission was recorded successfully, False otherwise
         """
-        self._ensure_table_exists()
+        try:
+            self._ensure_table_exists()
 
-        timestamp = datetime.now()
+            timestamp = datetime.now()
 
-        score_columns = {
-            f"test_{i}_score": test_scores.get(f"test_{i}", None) 
-            for i in range(1, 21)
-        }
+            score_columns = {
+                f"test_{i}_score": test_scores.get(f"test_{i}", None) 
+                for i in range(1, 21)
+            }
 
-        with self._get_connection() as conn:
-            with conn.cursor() as cur:
-                columns = [
-                    "user_name",
-                    "submission_tag",
-                    "timestamp",
-                    "final_score",
-                    "leaderboard_rank",
-                ] + list(score_columns.keys())
+            with self._get_connection() as conn:
+                with conn.cursor() as cur:
+                    columns = [
+                        "user_name",
+                        "submission_tag",
+                        "timestamp",
+                        "final_score",
+                        "leaderboard_rank",
+                    ] + list(score_columns.keys())
 
-                values = [
-                    user_name,
-                    submission_tag,
-                    timestamp,
-                    final_score,
-                    leaderboard_rank,
-                ] + list(score_columns.values())
+                    values = [
+                        user_name,
+                        submission_tag,
+                        timestamp,
+                        final_score,
+                        leaderboard_rank,
+                    ] + list(score_columns.values())
 
-                placeholders = ", ".join(["%s"] * len(values))
-                column_names = ", ".join(columns)
+                    placeholders = ", ".join(["%s"] * len(values))
+                    column_names = ", ".join(columns)
 
-                update_clause = ", ".join(
-                    [
-                        f"{col} = EXCLUDED.{col}"
-                        for col in columns
-                        if col not in ["user_name", "submission_tag"]
-                    ]
-                )
+                    update_clause = ", ".join(
+                        [
+                            f"{col} = EXCLUDED.{col}"
+                            for col in columns
+                            if col not in ["user_name", "submission_tag"]
+                        ]
+                    )
 
-                cur.execute(
-                    f"""
-                    INSERT INTO user_submissions ({column_names})
-                    VALUES ({placeholders})
-                    ON CONFLICT (user_name, submission_tag)
-                    DO UPDATE SET {update_clause}
-                    """,
-                    values,
-                )
-                conn.commit()
+                    cur.execute(
+                        f"""
+                        INSERT INTO user_submissions ({column_names})
+                        VALUES ({placeholders})
+                        ON CONFLICT (user_name, submission_tag)
+                        DO UPDATE SET {update_clause}
+                        """,
+                        values,
+                    )
+                    conn.commit()
+                    return True
+        except Exception as e:
+            # Log the error but don't crash the submission process
+            print(f"Warning: Failed to record submission to database: {e}")
+            return False

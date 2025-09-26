@@ -191,15 +191,17 @@ def create_app(config_override: Optional[Dict[str, Any]] = None) -> Flask:
                 participant_name=data["participant_name"]
             )
 
-            # Record submission with individual test scores
+            # Record submission with individual test scores (non-blocking)
             test_scores = evaluation_result.get("details", {}).get("test_scores", {})
-            submissions_manager.record_submission(
+            success = submissions_manager.record_submission(
                 user_name=data["participant_name"],
                 submission_tag=data["submission_tag"],
                 final_score=evaluation_result["score"],
                 test_scores=test_scores,
                 leaderboard_rank=current_rank,
             )
+            if not success:
+                print(f"Warning: Could not record submission to database for {data['participant_name']}")
 
             return jsonify(
                 {
