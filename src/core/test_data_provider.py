@@ -6,10 +6,13 @@ Provides intelligently designed vehicle configuration test data for embedding ev
 """
 
 import ast
+import logging
 from pathlib import Path
 from typing import Any, Dict, List
 
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 
 class TestDataProvider:
@@ -53,7 +56,9 @@ class TestDataProvider:
         Returns:
             Dictionary mapping test IDs to test configurations
         """
-        return {
+        logger.info("Generating test data for participant %s (%s)", participant_name, submission_tag)
+        
+        test_data = {
             "test_1": self._test_price_extremes(),
             "test_2": self._test_single_option_difference(),
             "test_3": self._test_model_year_sensitivity(),
@@ -65,6 +70,11 @@ class TestDataProvider:
             "test_9": self._test_transitivity(),
             "test_10": self._test_cross_year_comparison(),
         }
+        
+        total_configs = sum(len(test_configs) for test_configs in test_data.values())
+        logger.info("Generated %d tests with %d total configurations", len(test_data), total_configs)
+        
+        return test_data
 
     def _test_price_extremes(self) -> List[Dict[str, Any]]:
         """Test 1: Most expensive vs least expensive configurations should be dissimilar."""
