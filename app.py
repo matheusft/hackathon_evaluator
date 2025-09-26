@@ -31,6 +31,7 @@ try:
     from src.core.test_data_provider import TestDataProvider
     from src.core.leaderboard_manager import LeaderboardManager
     from src.core.evaluator import EvaluationEngine
+    from src.core.submissions_manager import SubmissionsManager
     from config.config_manager import load_config
 except ImportError:
     # Fallback to old location for transition compatibility
@@ -38,6 +39,7 @@ except ImportError:
         from test_data_provider import TestDataProvider
         from leaderboard_manager import LeaderboardManager
         from evaluator import EvaluationEngine
+        from submissions_manager import SubmissionsManager
         from config.config_manager import load_config
     except ImportError as e:
         raise ImportError(f"Failed to import required modules: {e}")
@@ -72,6 +74,7 @@ def create_app(config_override: Optional[Dict[str, Any]] = None) -> Flask:
 
     # Initialize components with config
     leaderboard_manager = LeaderboardManager()
+    submissions_manager = SubmissionsManager()
     evaluation_engine = EvaluationEngine(config=app_config)
     test_data_provider = TestDataProvider(
         seed=app_config.test_data.seed,
@@ -186,6 +189,16 @@ def create_app(config_override: Optional[Dict[str, Any]] = None) -> Flask:
             # Get current rank
             current_rank = leaderboard_manager.get_participant_rank(
                 participant_name=data["participant_name"]
+            )
+
+            # Record submission with individual test scores
+            test_scores = evaluation_result.get("details", {}).get("test_scores", {})
+            submissions_manager.record_submission(
+                user_name=data["participant_name"],
+                submission_tag=data["submission_tag"],
+                final_score=evaluation_result["score"],
+                test_scores=test_scores,
+                leaderboard_rank=current_rank,
             )
 
             return jsonify(
